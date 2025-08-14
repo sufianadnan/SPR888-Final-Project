@@ -311,4 +311,4 @@ index=* EventCode=5145 Object_Type=File
 ## 📬 Contact
 
 - **Splunk Queries & Setup Assistance**: [sufianmadnan@icloud.com](mailto:sufianmadnan@icloud.com)  
-- **Attack Simulation & Red Team Portion**: [shiv1303kumar@gmail.com](mailto:shiv1303patel@gmail.com)
+- **Attack Simulation & Red Team Portion**: [shiv1303patel@gmail.com](mailto:shiv1303patel@gmail.com)
