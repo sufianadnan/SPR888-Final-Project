@@ -4,7 +4,7 @@ A full lab simulation of an end-to-end Active Directory attack lifecycle with de
 
 - Research Paper: Detection of Active Directory Attacks Using Log Correlation Techniques with Splunk SIEM
 - Group Members: Sufian Adnan, Shivkumar Patel, Sagarkumar Patel, Karan Brara
-- Video Demonstration [Click Here to View on YouTube](https://youtu.be/rWSWJPQ7yz0)
+- Video Demonstration [Click Here to View on YouTube](https://youtu.be/gBjenYKNg6k)
 ---
 
 ## 🔍 Overview
