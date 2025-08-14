@@ -1,0 +1,29 @@
+index=* EventCode=5145 Object_Type=File 
+  | eval exe_name=lower(Relative_Target_Name)
+  | eval log_type="5145"
+  | table _time, host, exe_name, Relative_Target_Name, Share_Name, Source_Address, Account_Name, log_type
+| append [
+  search index=* EventCode=7045 
+  | rex field=Message "Service File Name:\s+(?<exe_full>.+\.exe)"
+  | eval exe_name=lower(replace(exe_full, ".*\\\\", ""))
+  | eval log_type="7045"
+  | table _time, host, exe_name, exe_full, Message, User, log_type
+]
+| stats 
+    values(_time) as Timestamps,
+    values(Relative_Target_Name) as WrittenExe,
+    values(Share_Name) as ShareNames,
+    values(Source_Address) as SourceAddresses,
+    values(Account_Name) as DroppingAccounts,
+    values(User) as ServiceInstallers,
+    values(exe_full) as InstalledExe,
+    values(Message) as InstallMessages,
+    dc(log_type) as Stages
+    by exe_name, host
+| eval is_suspicious=case(
+    Stages=2, "YES",
+    match(exe_name, "^[a-z0-9]{6,12}\.exe$"), "LIKELY",
+    like(exe_name, "%remcom%") OR like(exe_name, "%psexec%") OR like(exe_name, "%wmiexec%") OR like(exe_name, "%atexec%"), "YES",
+    1=1, "NO"
+)
+| table exe_name, host, is_suspicious, Stages, Timestamps, WrittenExe, InstalledExe, DroppingAccounts, ServiceInstallers, SourceAddresses, ShareNames, InstallMessages

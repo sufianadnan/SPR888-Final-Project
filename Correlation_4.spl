@@ -1,0 +1,45 @@
+index=* EventCode=5145 Object_Type=File 
+| eval exe_name=lower(Relative_Target_Name)
+| where like(exe_name, "%.exe") AND (
+    like(Share_Name, "\\\\%\\ADMIN$") OR 
+    like(Share_Name, "\\\\%\\C$") OR 
+    like(Share_Name, "\\\\%\\IPC$")
+  )
+| eval log_type="5145"
+| table _time, host, exe_name, Share_Name, Source_Address, Account_Name, log_type
+| append [
+  search index=* EventCode=7045 
+  | rex field=Message "Service File Name:\s+(?<exe_full>.+\.exe)"
+  | eval exe_name=lower(replace(exe_full, ".*\\\\", ""))
+  | eval log_type="7045"
+  | table _time, host, exe_name, exe_full, Message, User, log_type
+]
+| append [
+  search index=* EventCode=1 
+  | where like(CommandLine, "%-ForceV1%") AND like(Image, "%conhost.exe")
+  | rex field=ParentCommandLine "(?<exe_name>[a-zA-Z0-9_-]{6,15}\.exe)"
+  | eval exe_name=lower(exe_name)
+  | eval parent=coalesce(ParentImage, ""), log_type="proc"
+  | table _time, host, exe_name, CommandLine, parent, ParentCommandLine, User, ParentUser, log_type
+]
+| stats 
+    values(_time) as Timestamps,
+    values(Share_Name) as ShareNames,
+    values(Source_Address) as SourceAddresses,
+    values(Account_Name) as FileDroppers,
+    values(User) as ServiceInstallers,
+    values(exe_full) as ServicePaths,
+    values(Message) as ServiceMessages,
+    values(CommandLine) as ProcCmds,
+    values(parent) as Parents,
+    values(ParentCommandLine) as ParentCmds,
+    values(ParentUser) as ParentUsers,
+    dc(log_type) as StageCount
+    by exe_name, host
+| eval is_suspicious=case(
+    StageCount >= 3, "YES",
+    StageCount = 2, "LIKELY",
+    like(exe_name, "%psexec%") OR like(exe_name, "%wmiexec%") OR like(exe_name, "%smbexec%") OR like(exe_name, "%remcom%"), "YES",
+    1=1, "NO"
+)
+| table exe_name, host, is_suspicious, StageCount, Timestamps, ShareNames, SourceAddresses, FileDroppers, ServiceInstallers, ServicePaths, ServiceMessages, ProcCmds, Parents, ParentCmds, ParentUsers

@@ -1,0 +1,17 @@
+index=* EventCode=1 
+| eval parent=coalesce(ParentImage, "none"), exe=coalesce(Image, "none")
+| where like(CommandLine, "%-ForceV1%") 
+    AND like(exe, "%\\conhost.exe")
+    AND (
+        like(parent, "%\\cmd.exe") OR 
+        like(parent, "%\\psexesvc.exe") OR 
+        like(parent, "%\\wmiexec.py") OR
+        like(parent, "%\\smbexec.py") OR 
+        like(parent, "%\\impacket%") OR 
+        match(ParentCommandLine, ".*cmd.*") OR 
+        match(ParentCommandLine, ".*\\\\127\\.0\\.0\\.1\\\\.*")
+    )
+| eval action="possible_psexec_like_behavior"
+| table _time, host, action, exe, CommandLine, parent, ParentCommandLine, User, ParentUser, process_id, ParentProcessId
+| sort -_time
+ 

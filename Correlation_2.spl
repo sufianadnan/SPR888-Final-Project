@@ -1,0 +1,8 @@
+index=* EventCode=5145 Object_Type=File 
+| eval share_lc=lower(Share_Name), file_lc=lower(Relative_Target_Name)
+| where (like(share_lc, "\\\\%\\admin$") OR like(share_lc, "\\\\%\\ipc$") OR like(share_lc, "\\\\%\\c$"))
+| where (like(file_lc, "%.exe") OR like(file_lc, "%.dll"))
+| where Access_Mask="0x2"
+| eval action="smb_file_write"
+| stats 
+    count by _time, host, Account_Name, Source_Address, Relative_Target_Name, Share_Name, Access_Mask, action
